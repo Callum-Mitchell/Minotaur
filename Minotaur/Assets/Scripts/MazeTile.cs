@@ -11,12 +11,16 @@ public class MazeTile {
     public MazeTile left = null;
     public MazeTile right = null;
 
+    public int row = 0;
+    public int column = 0;
+
     public bool isEntranceConnected = false; //Means at least 1 path exists from this tile to the maze entrance
-    public int entranceDistance = -1;
+    public bool isAdjacentToEntranceConnection = false; //Means one or more of the tiles next to it is entrance-connected
+    public int entranceDistance = -1; //Distance between the current node and the entrance
 
     public enum direction
     {
-        TOP = 0, BOTTOM = 1, LEFT = 2, RIGHT = 3 
+        TOP, LEFT, BOTTOM, RIGHT
     };
 
     // Use this for initialization
@@ -30,25 +34,26 @@ public class MazeTile {
 	}
 
 
-    //Creates a path between two MazeTile nodes. NOTE: During generation, only create connections from tiles which are entrance-connected
+    //Creates a path between the current tile node and another adjacent node passed in
+    //NOTE: During generation, only create connections from tiles which are entrance-connected, and only adjacent ones
     void createConnection(MazeTile otherTile, direction connectionDirection)
     {
         switch(connectionDirection)
         {
             case direction.TOP:
-                top = new MazeTile();
+                top = otherTile;
                 otherTile.bottom = this;
                 break;
             case direction.BOTTOM:
-                bottom = new MazeTile();
+                bottom = otherTile;
                 otherTile.top = this;
                 break;
             case direction.LEFT:
-                left = new MazeTile();
+                left = otherTile;
                 otherTile.right = this;
                 break;
             case direction.RIGHT:
-                right = new MazeTile();
+                right = otherTile;
                 otherTile.left = this;
                 break;
 
