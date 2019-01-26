@@ -87,7 +87,7 @@ public class MazeLayout : MonoBehaviour {
                 {
                     //Top
                     otherTile = tiles[tileToConnect.column][tileToConnect.row + 1];
-                    if (!otherTile.isEntranceConnected || Random.Range(0, 1) < redundantConnectionThreshold)
+                    if (!otherTile.isEntranceConnected || Random.Range(0.0f, 1.0f) < redundantConnectionThreshold)
                     {
                         if (!otherTile.isEntranceConnected)
                         {
@@ -108,7 +108,7 @@ public class MazeLayout : MonoBehaviour {
                 {
                     //Bottom
                     otherTile = tiles[tileToConnect.column][tileToConnect.row - 1];
-                    if (!otherTile.isEntranceConnected || Random.Range(0, 1) < redundantConnectionThreshold)
+                    if (!otherTile.isEntranceConnected || Random.Range(0.0f, 1.0f) < redundantConnectionThreshold)
                     {
                         if (!otherTile.isEntranceConnected) accessibleTiles++;
                         {
@@ -128,7 +128,7 @@ public class MazeLayout : MonoBehaviour {
                 {
                     //Left
                     otherTile = tiles[tileToConnect.column - 1][tileToConnect.row];
-                    if (!otherTile.isEntranceConnected || Random.Range(0, 1) < redundantConnectionThreshold)
+                    if (!otherTile.isEntranceConnected || Random.Range(0.0f, 1.0f) < redundantConnectionThreshold)
                     {
                         if (!otherTile.isEntranceConnected)
                         {
@@ -149,7 +149,7 @@ public class MazeLayout : MonoBehaviour {
                 {
                     //Right
                     otherTile = tiles[tileToConnect.column + 1][tileToConnect.row];
-                    if (!otherTile.isEntranceConnected || Random.Range(0, 1) < redundantConnectionThreshold)
+                    if (!otherTile.isEntranceConnected || Random.Range(0.0f, 1.0f) < redundantConnectionThreshold)
                     {
                         if (!otherTile.isEntranceConnected)
                         {
