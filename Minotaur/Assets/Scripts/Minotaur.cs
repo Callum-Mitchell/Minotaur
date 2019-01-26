@@ -8,8 +8,10 @@ public class Minotaur : MonoBehaviour {
     private Transform Body;
     public GameObject playerStateManagerObject;
     private PlayerStateManager playerState;
+    public GameObject mazeLayoutObject;
+    private MazeLayout mazeLayout;
     //Behavioral config
-    public float secondsPerRelocation = 5f;
+    public float secondsPerRelocation = 3f;
     //public float normalAcceleration = 0.05f; //global units per fixedUpdate squared (will save this stuff for later prototypes)
     public float roamingMoveSpeed = 0.1f; //global units per fixedUpdate
     public float roamingRotationSpeed = 2f; //degrees per fixedUpdate
@@ -27,22 +29,43 @@ public class Minotaur : MonoBehaviour {
     public int minStartingColumn = 0, maxStartingColumn = 19;
 
     //State values
+    private int currentRow, currentColumn;
     private MinotaurFacingRotation facingDirection;
+    private List<MinotaurFacingRotation> targetPath; //contains all 1-tile movements required to reach target tile (last movement first in list)
     private MinotaurMovementState movementState;
-    private float currentMovementSpeed = 0;
+    private float currentMovementSpeed = 0f;
     private float chargeSpeedOffset = 0f;
+    private bool relocationDue = false;
+
+    //Noise level units are in decibels. Higher = louder noises made by minotaur.
+    //The minotaur can only hear noises with a coded noise level above its own
+    //Each difference of 1 means can be heard from a distance of 3 in-game units
+    private float roamingNoiseLevel = 0f;
+    private float investigatingNoiseLevel = 3f;
+    private float chargingNoiseLevel = 25f;
+    private float chasingNoiseLevel = 7f;
+    private float standingNoiseLevel = -5f;
+    private float currentNoiseLevel;
 
     private List<float> directionToYRotation; //lookup table
     public Vector3 firstRowColumnPosition;
     private Vector3 targetPosition;
     // Use this for initialization
     void Start() {
+        Body = transform;
+    }
+    //Called separately from start
+    public void setup()
+    {
         playerState = playerStateManagerObject.GetComponent<PlayerStateManager>();
+        mazeLayout = mazeLayoutObject.GetComponent<MazeLayout>();
         //Generate a random starting tile within a possible tile range
         int startCol = Random.Range(minStartingColumn, maxStartingColumn);
         int startRow = Random.Range(minStartingRow, maxStartingRow);
         //Use to set starting position
         transform.position = new Vector3(firstRowColumnPosition.x + (startRow * mazeTileDepth), firstRowColumnPosition.y, firstRowColumnPosition.z - (startCol * mazeTileWidth));
+        currentColumn = startCol;
+        currentRow = startRow;
         //Randomize starting rotation
         int startFaceDirectionIndex = Random.Range(0, 3);
         switch (startFaceDirectionIndex)
@@ -54,6 +77,16 @@ public class Minotaur : MonoBehaviour {
         }
         transform.rotation = Quaternion.Euler(0, (float)facingDirection, 0);
 
+        //Default movement state to roaming
+        movementState = MinotaurMovementState.ROAMING;
+        currentNoiseLevel = roamingNoiseLevel;
+        relocationDue = false;
+        StartCoroutine(doNothing(1f));
+    }
+    IEnumerator doNothing(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        findNextAction();
     }
 
     // Update is called once per frame
@@ -61,27 +94,115 @@ public class Minotaur : MonoBehaviour {
 
     }
 
-    //(TODO) function for determining location of player
+    //(TODO) function for determining location of a source sound
+    //For now, this will just be the player. In future builds, this will grow to include other sounds
+    //(Another function will have to be called first 
+    void locateSound()
+    {
 
-    //Coroutine that calls decision to relocate player every x seconds
-    IEnumerator locatePlayer()
+    }
+
+    void findPathToTarget(int targetRow, int targetColumn)
+    {
+
+    }
+
+    //Coroutine that signals time to re-listen for sounds (eg of the player every x seconds
+    IEnumerator listeningTimer()
     {
         //At some point, we'll have the minotaur estimate the player's location with some margin for error.
         //For now, though, the minotaur will simply locate the player if a) they are within a certain range,
         //and b) they are making noise above a certain threshold (give each movement option its own threshold)
-
+        
         yield return new WaitForSeconds(secondsPerRelocation);
-        StartCoroutine(locatePlayer());
+        relocationDue = true;
+        StartCoroutine(listeningTimer());
     }
 
-    //
+    //Determines which way the minotaur should move next
     void findNextAction()
     {
+        //Check: are we due for a player relocation?
 
+        switch(movementState)
+        {
+            case MinotaurMovementState.ROAMING:
+                //ROAMING: pick a direction to move from the current tile (must be minotaur-accessible)
+                MazeTile currentTile = mazeLayout.tiles[currentColumn][currentRow];
+                //Start with a random direction that isn't behind the minotaur (weigh towards forward). If free, select.
+                int startingRotation;
+                float startingValue = Random.Range(0f, 1f);
+                if (startingValue < 0.2f)
+                {
+                    //90 degree clockwise turn
+                    startingRotation = (int)facingDirection + 90;
+                }
+                else if(startingValue < 0.8f)
+                {
+                    //straight ahead
+                    startingRotation = (int)facingDirection;
+                }
+                else
+                {
+                    //90 degree counterclockwise turn
+                    startingRotation = (int)facingDirection - 90;
+                }
+                if (startingRotation < 0) startingRotation += 360;
+                else if (startingRotation > 270) startingRotation -= 360;
+                MinotaurFacingRotation startingDirection = (MinotaurFacingRotation)startingRotation;
+                MinotaurFacingRotation targetDirection = startingDirection;
+                do
+                {
+                    switch(targetDirection)
+                    {
+                        case MinotaurFacingRotation.UP:
+                            if (currentTile.top != null)
+                            {
+                                StartCoroutine(changeDirection(targetDirection, true));
+                                return;
+                            }
+                            break;
+                        case MinotaurFacingRotation.RIGHT:
+                            if (currentTile.top != null)
+                            {
+                                StartCoroutine(changeDirection(targetDirection, true));
+                                return;
+                            }
+                            break;
+                        case MinotaurFacingRotation.LEFT:
+                            if (currentTile.top != null)
+                            {
+                                StartCoroutine(changeDirection(targetDirection, true));
+                                return;
+                            }
+                            break;
+                        case MinotaurFacingRotation.DOWN:
+                            if (currentTile.top != null)
+                            {
+                                StartCoroutine(changeDirection(targetDirection, true));
+                                return;
+                            }
+                            break;
+                    }
+                    //Next: try path to right of minotaur, weighing towards forward
+                    int newTargetDirection = (int)targetDirection + (startingValue < 0.2f ? -90 : 90);
+                    if (newTargetDirection > 270) newTargetDirection -= 360;
+                    else if (newTargetDirection < 0) newTargetDirection += 360;
+                    targetDirection = (MinotaurFacingRotation)newTargetDirection;
+                    
+                } while (startingDirection != facingDirection);
+                //Minotaur is trapped on 1 tile (wow! How'd you pull that off, player?!)
+                StartCoroutine(doNothing(1f));
+                break;
+            default:
+                //standing or unknown state
+                StartCoroutine(doNothing(1f));
+                break;
+        }
     }
 
     //Coroutine for rotating the minotaur
-    IEnumerator changeDirection(MinotaurFacingRotation target)
+    IEnumerator changeDirection(MinotaurFacingRotation target, bool moveAfter)
     {
         //Determine rotation speed
         float rotationSpeed;
@@ -105,7 +226,7 @@ public class Minotaur : MonoBehaviour {
         {
             rotationSpeed = -rotationSpeed;
         }
-        float lastRotation = Body.eulerAngles.y;
+        float lastRotation = Body.eulerAngles.y; //This line is causing a problem...
         float nextRotation = lastRotation + rotationSpeed;
         float targetRotation = (float)target;
         while ((lastRotation < targetRotation && nextRotation <= targetRotation)
@@ -115,11 +236,22 @@ public class Minotaur : MonoBehaviour {
             lastRotation = Body.eulerAngles.y;
             nextRotation = lastRotation + rotationSpeed;
             yield return new WaitForFixedUpdate();
-        } 
+        }
 
+        //If moveAfter is true, move in the newly-faced direction
+        if (moveAfter)
+        {
+            switch (target)
+            {
+                case MinotaurFacingRotation.UP: StartCoroutine(MoveUp()); break;
+                case MinotaurFacingRotation.DOWN: StartCoroutine(MoveDown()); break;
+                case MinotaurFacingRotation.LEFT: StartCoroutine(MoveLeft()); break;
+                case MinotaurFacingRotation.RIGHT: StartCoroutine(MoveRight()); break;
+            }
+        }
     }
 
-    //Movement routine covering roaming, investigating, chasing, charging, etc
+    //Movement routines covering roaming, investigating, chasing, charging, etc
     IEnumerator MoveUp()
     {
         float targetXPos = Body.position.x + mazeTileDepth;
@@ -144,7 +276,7 @@ public class Minotaur : MonoBehaviour {
             }
             yield return new WaitForFixedUpdate();
         }
-
+        findNextAction();
     }
     IEnumerator MoveDown()
     {
@@ -170,6 +302,7 @@ public class Minotaur : MonoBehaviour {
             }
             yield return new WaitForFixedUpdate();
         }
+        findNextAction();
 
     }
     IEnumerator MoveLeft()
@@ -196,6 +329,7 @@ public class Minotaur : MonoBehaviour {
             }
             yield return new WaitForFixedUpdate();
         }
+        findNextAction();
 
     }
     IEnumerator MoveRight()
@@ -222,6 +356,7 @@ public class Minotaur : MonoBehaviour {
             }
             yield return new WaitForFixedUpdate();
         }
+        findNextAction();
 
     }
 }

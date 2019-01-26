@@ -113,6 +113,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &18948922 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 1569582981900484, guid: 9aad61958c5cda74bbe1c01dba2f5a4f,
+    type: 2}
+  m_PrefabInternal: {fileID: 153386624}
 --- !u!4 &18948923 stripped
 Transform:
   m_PrefabParentObject: {fileID: 4664044450394798, guid: 9aad61958c5cda74bbe1c01dba2f5a4f,
@@ -3819,6 +3824,11 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 1653707719}
     m_Modifications:
+    - target: {fileID: 114952372322228994, guid: 9aad61958c5cda74bbe1c01dba2f5a4f,
+        type: 2}
+      propertyPath: MinotaurObjects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4664044450394798, guid: 9aad61958c5cda74bbe1c01dba2f5a4f, type: 2}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -3886,6 +3896,11 @@ Prefab:
       propertyPath: redundantConnectionThreshold
       value: 0.1
       objectReference: {fileID: 0}
+    - target: {fileID: 114952372322228994, guid: 9aad61958c5cda74bbe1c01dba2f5a4f,
+        type: 2}
+      propertyPath: MinotaurObjects.Array.data[0]
+      value: 
+      objectReference: {fileID: 879954559}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 9aad61958c5cda74bbe1c01dba2f5a4f, type: 2}
   m_IsPrefabParent: 0
@@ -7670,6 +7685,11 @@ Transform:
   m_Father: {fileID: 1653707719}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &879954559 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 1441794143895372, guid: 3026881db22d8c9489d33d6eecfd3247,
+    type: 2}
+  m_PrefabInternal: {fileID: 1888666211}
 --- !u!1 &915192313
 GameObject:
   m_ObjectHideFlags: 0
@@ -7832,15 +7852,31 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 5e9e851c0e142814dac026a256ba2ac0, type: 2}
       propertyPath: m_CrouchSpeed
-      value: 4
+      value: 3.5
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 5e9e851c0e142814dac026a256ba2ac0, type: 2}
       propertyPath: m_RunSpeed
-      value: 15
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 5e9e851c0e142814dac026a256ba2ac0, type: 2}
       propertyPath: m_WalkSpeed
-      value: 7
+      value: 6.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 5e9e851c0e142814dac026a256ba2ac0, type: 2}
+      propertyPath: m_RunstepLenghten
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 5e9e851c0e142814dac026a256ba2ac0, type: 2}
+      propertyPath: m_HeadBob.Bobcurve.m_Curve.Array.data[1].value
+      value: 0.8499985
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 5e9e851c0e142814dac026a256ba2ac0, type: 2}
+      propertyPath: m_HeadBob.Bobcurve.m_RotationOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 5e9e851c0e142814dac026a256ba2ac0, type: 2}
+      propertyPath: m_HeadBob.Bobcurve.m_Curve.Array.data[3].value
+      value: -0.8500061
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5e9e851c0e142814dac026a256ba2ac0, type: 2}
@@ -12041,6 +12077,16 @@ Prefab:
       propertyPath: playerStateManagerObject
       value: 
       objectReference: {fileID: 1373946345}
+    - target: {fileID: 114429262970563972, guid: 3026881db22d8c9489d33d6eecfd3247,
+        type: 2}
+      propertyPath: mazeLayoutObject
+      value: 
+      objectReference: {fileID: 18948922}
+    - target: {fileID: 114429262970563972, guid: 3026881db22d8c9489d33d6eecfd3247,
+        type: 2}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 3026881db22d8c9489d33d6eecfd3247, type: 2}
   m_IsPrefabParent: 0

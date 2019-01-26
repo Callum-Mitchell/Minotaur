@@ -7,6 +7,8 @@ public class MazeLayout : MonoBehaviour {
     public GameObject horizontalWall;
     public GameObject verticalWall;
     public GameObject Pillar;
+    public List<GameObject> MinotaurObjects;
+    private List<Minotaur> MinotaurBehaviors;
 
     public List< List<MazeTile> > tiles; //Stores all tiles in the maze. 1st index is column, 2nd is row
     public List<MazeTile> boundaryTiles; //Stores all entrance-connected tiles that are adjacent to non entrance-connected ones
@@ -32,6 +34,14 @@ public class MazeLayout : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
+        //Get the minotaurs
+        MinotaurBehaviors = new List<Minotaur>();
+        for (int i = 0; i < MinotaurObjects.Count; i++)
+        {
+            MinotaurBehaviors.Add(MinotaurObjects[i].GetComponent<Minotaur>());
+        }
+
+        //Setup for maze generation
         tiles = new List<List<MazeTile>>();
         boundaryTiles = new List<MazeTile>();
         totalTiles = mazeWidth * mazeDepth;
@@ -235,5 +245,10 @@ public class MazeLayout : MonoBehaviour {
             }
         }
 
+        //Now that the layout has been fully generated, time to set up the minotaur(s)
+        for (int i = 0; i < MinotaurObjects.Count; i++)
+        {
+            MinotaurBehaviors[i].setup();
+        }
     }
 }
