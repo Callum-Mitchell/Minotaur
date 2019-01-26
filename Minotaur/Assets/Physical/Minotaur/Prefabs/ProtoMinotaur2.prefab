@@ -39,6 +39,7 @@ GameObject:
   - component: {fileID: 33397948215566920}
   - component: {fileID: 135752891535985624}
   - component: {fileID: 23336403347398586}
+  - component: {fileID: 114429262970563972}
   m_Layer: 0
   m_Name: ProtoMinotaur2
   m_TagString: Untagged
@@ -70,7 +71,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1441794143895372}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -50, y: 2, z: 56}
+  m_LocalPosition: {x: -51.5, y: 2, z: 51.5}
   m_LocalScale: {x: 6, y: 4, z: 4}
   m_Children:
   - {fileID: 4981411208989944}
@@ -145,6 +146,36 @@ MeshFilter:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1441794143895372}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &114429262970563972
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1441794143895372}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bd6d8a2cf98a254da61345cba29b437, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerStateManagerObject: {fileID: 0}
+  secondsPerRelocation: 5
+  roamingMoveSpeed: 0.1
+  roamingRotationSpeed: 2
+  investigatingMoveSpeed: 0.18
+  investigatingRotationSpeed: 3
+  chasingMoveSpeed: 0.3
+  chasingRotationSpeed: 4
+  chargingStartMoveSpeed: 1
+  chargingAcceleration: 0.01
+  mazeTileWidth: 6
+  mazeTileDepth: 6
+  rowCount: 20
+  columnCount: 20
+  minStartingRow: 0
+  maxStartingRow: 19
+  minStartingColumn: 0
+  maxStartingColumn: 19
+  firstRowColumnPosition: {x: -51.5, y: 0, z: 51.5}
 --- !u!135 &135752891535985624
 SphereCollider:
   m_ObjectHideFlags: 1

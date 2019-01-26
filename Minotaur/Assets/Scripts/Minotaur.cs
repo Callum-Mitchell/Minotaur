@@ -6,6 +6,8 @@ public class Minotaur : MonoBehaviour {
 
     //caching
     private Transform Body;
+    public GameObject playerStateManagerObject;
+    private PlayerStateManager playerState;
     //Behavioral config
     public float secondsPerRelocation = 5f;
     //public float normalAcceleration = 0.05f; //global units per fixedUpdate squared (will save this stuff for later prototypes)
@@ -35,7 +37,7 @@ public class Minotaur : MonoBehaviour {
     private Vector3 targetPosition;
     // Use this for initialization
     void Start() {
-
+        playerState = playerStateManagerObject.GetComponent<PlayerStateManager>();
         //Generate a random starting tile within a possible tile range
         int startCol = Random.Range(minStartingColumn, maxStartingColumn);
         int startRow = Random.Range(minStartingRow, maxStartingRow);
@@ -56,6 +58,25 @@ public class Minotaur : MonoBehaviour {
 
     // Update is called once per frame
     void FixedUpdate() {
+
+    }
+
+    //(TODO) function for determining location of player
+
+    //Coroutine that calls decision to relocate player every x seconds
+    IEnumerator locatePlayer()
+    {
+        //At some point, we'll have the minotaur estimate the player's location with some margin for error.
+        //For now, though, the minotaur will simply locate the player if a) they are within a certain range,
+        //and b) they are making noise above a certain threshold (give each movement option its own threshold)
+
+        yield return new WaitForSeconds(secondsPerRelocation);
+        StartCoroutine(locatePlayer());
+    }
+
+    //
+    void findNextAction()
+    {
 
     }
 
