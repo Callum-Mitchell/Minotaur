@@ -18,11 +18,6 @@ public class MazeTile {
     public bool isAdjacentToEntranceConnection = false; //Means one or more of the tiles next to it is entrance-connected
     public int entranceDistance = -1; //Distance between the current node and the entrance
 
-    public enum direction
-    {
-        TOP, LEFT, BOTTOM, RIGHT
-    };
-
     // Use this for initialization
     void Start () {
 		
@@ -36,23 +31,23 @@ public class MazeTile {
 
     //Creates a path between the current tile node and another adjacent node passed in
     //NOTE: During generation, only create connections from tiles which are entrance-connected, and only adjacent ones
-    void createConnection(MazeTile otherTile, direction connectionDirection)
+    public void createConnection(MazeTile otherTile, MazeConnectionDirection connectionDirection)
     {
         switch(connectionDirection)
         {
-            case direction.TOP:
+            case MazeConnectionDirection.TOP:
                 top = otherTile;
                 otherTile.bottom = this;
                 break;
-            case direction.BOTTOM:
+            case MazeConnectionDirection.BOTTOM:
                 bottom = otherTile;
                 otherTile.top = this;
                 break;
-            case direction.LEFT:
+            case MazeConnectionDirection.LEFT:
                 left = otherTile;
                 otherTile.right = this;
                 break;
-            case direction.RIGHT:
+            case MazeConnectionDirection.RIGHT:
                 right = otherTile;
                 otherTile.left = this;
                 break;
