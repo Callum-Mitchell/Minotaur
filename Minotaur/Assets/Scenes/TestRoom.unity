@@ -7662,6 +7662,40 @@ Transform:
   m_Father: {fileID: 1653707719}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &886832361 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 1441794143895372, guid: 3026881db22d8c9489d33d6eecfd3247,
+    type: 2}
+  m_PrefabInternal: {fileID: 1888666211}
+--- !u!114 &886832362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 886832361}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bd6d8a2cf98a254da61345cba29b437, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  secondsPerRelocation: 5
+  roamingMoveSpeed: 0.1
+  roamingRotationSpeed: 2
+  investigatingMoveSpeed: 0.18
+  investigatingRotationSpeed: 3
+  chasingMoveSpeed: 0.3
+  chasingRotationSpeed: 4
+  chargingStartMoveSpeed: 1
+  chargingAcceleration: 0.01
+  mazeTileWidth: 6
+  mazeTileDepth: 6
+  rowCount: 20
+  columnCount: 20
+  minStartingRow: 0
+  maxStartingRow: 19
+  minStartingColumn: 0
+  maxStartingColumn: 19
+  firstRowColumnPosition: {x: -51.5, y: 0, z: 51.5}
 --- !u!1 &915192313
 GameObject:
   m_ObjectHideFlags: 0
@@ -11968,6 +12002,10 @@ Prefab:
     - target: {fileID: 4118771763083694, guid: 3026881db22d8c9489d33d6eecfd3247, type: 2}
       propertyPath: m_RootOrder
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4118771763083694, guid: 3026881db22d8c9489d33d6eecfd3247, type: 2}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 3026881db22d8c9489d33d6eecfd3247, type: 2}
