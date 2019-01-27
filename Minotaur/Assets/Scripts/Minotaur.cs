@@ -75,7 +75,7 @@ public class Minotaur : MonoBehaviour {
             case 2: facingDirection = MinotaurFacingRotation.DOWN; break;
             case 3: facingDirection = MinotaurFacingRotation.RIGHT; break;
         }
-        transform.rotation = Quaternion.Euler(0, (float)facingDirection, 0);
+        Body.rotation = Quaternion.Euler(0, (float)facingDirection, 0);
 
         //Default movement state to roaming
         movementState = MinotaurMovementState.ROAMING;
@@ -163,21 +163,21 @@ public class Minotaur : MonoBehaviour {
                             }
                             break;
                         case MinotaurFacingRotation.RIGHT:
-                            if (currentTile.top != null)
+                            if (currentTile.right != null)
                             {
                                 StartCoroutine(changeDirection(targetDirection, true));
                                 return;
                             }
                             break;
                         case MinotaurFacingRotation.LEFT:
-                            if (currentTile.top != null)
+                            if (currentTile.left != null)
                             {
                                 StartCoroutine(changeDirection(targetDirection, true));
                                 return;
                             }
                             break;
                         case MinotaurFacingRotation.DOWN:
-                            if (currentTile.top != null)
+                            if (currentTile.bottom != null)
                             {
                                 StartCoroutine(changeDirection(targetDirection, true));
                                 return;
@@ -190,7 +190,7 @@ public class Minotaur : MonoBehaviour {
                     else if (newTargetDirection < 0) newTargetDirection += 360;
                     targetDirection = (MinotaurFacingRotation)newTargetDirection;
                     
-                } while (startingDirection != facingDirection);
+                } while (startingDirection != targetDirection);
                 //Minotaur is trapped on 1 tile (wow! How'd you pull that off, player?!)
                 StartCoroutine(doNothing(1f));
                 break;
@@ -204,40 +204,45 @@ public class Minotaur : MonoBehaviour {
     //Coroutine for rotating the minotaur
     IEnumerator changeDirection(MinotaurFacingRotation target, bool moveAfter)
     {
-        //Determine rotation speed
-        float rotationSpeed;
-        switch(movementState)
+        //Skip all the rotation if already facing the right direction
+        if (target != facingDirection)
         {
-            case MinotaurMovementState.INVESTIGATING: rotationSpeed = investigatingRotationSpeed; break;
-            case MinotaurMovementState.CHASING: rotationSpeed = chasingRotationSpeed; break;
-            case MinotaurMovementState.ROAMING:
-            default:
-                rotationSpeed = roamingRotationSpeed;
-                break;
-        }
+            //Determine rotation speed
+            float rotationSpeed;
+            switch (movementState)
+            {
+                case MinotaurMovementState.INVESTIGATING: rotationSpeed = investigatingRotationSpeed; break;
+                case MinotaurMovementState.CHASING: rotationSpeed = chasingRotationSpeed; break;
+                case MinotaurMovementState.ROAMING:
+                default:
+                    rotationSpeed = roamingRotationSpeed;
+                    break;
+            }
 
-        //Determine whether to rotate left or right. Only turn right up to 90 degrees
-        bool turnRight =
-            (facingDirection == MinotaurFacingRotation.UP && target == MinotaurFacingRotation.RIGHT
-            || facingDirection == MinotaurFacingRotation.RIGHT && target == MinotaurFacingRotation.DOWN
-            || facingDirection == MinotaurFacingRotation.DOWN && target == MinotaurFacingRotation.LEFT
-            || facingDirection == MinotaurFacingRotation.LEFT && target == MinotaurFacingRotation.UP);
-        if(!turnRight)
-        {
-            rotationSpeed = -rotationSpeed;
-        }
-        float lastRotation = Body.eulerAngles.y; //This line is causing a problem...
-        float nextRotation = lastRotation + rotationSpeed;
-        float targetRotation = (float)target;
-        while ((lastRotation < targetRotation && nextRotation <= targetRotation)
-            || (lastRotation > targetRotation && nextRotation >= targetRotation))
-        {
-            Body.Rotate(new Vector3(0, rotationSpeed, 0));
-            lastRotation = Body.eulerAngles.y;
-            nextRotation = lastRotation + rotationSpeed;
-            yield return new WaitForFixedUpdate();
-        }
+            //Determine whether to rotate left or right. Only turn right up to 90 degrees
+            bool turnRight =
+                (facingDirection == MinotaurFacingRotation.UP && target == MinotaurFacingRotation.RIGHT
+                || facingDirection == MinotaurFacingRotation.RIGHT && target == MinotaurFacingRotation.DOWN
+                || facingDirection == MinotaurFacingRotation.DOWN && target == MinotaurFacingRotation.LEFT
+                || facingDirection == MinotaurFacingRotation.LEFT && target == MinotaurFacingRotation.UP);
+            if (!turnRight)
+            {
+                rotationSpeed = -rotationSpeed;
+            }
+            float lastRotation = Body.eulerAngles.y;
+            float nextRotation = lastRotation + rotationSpeed;
+            float targetRotation = (float)target;
+            while ((lastRotation < targetRotation - 0.0001f && nextRotation <= targetRotation - 0.0001f)
+                || (lastRotation > targetRotation + 0.0001f && nextRotation >= targetRotation + 0.0001f))
+            {
+                Body.Rotate(new Vector3(0, rotationSpeed, 0));
+                lastRotation = Body.eulerAngles.y;
+                nextRotation = lastRotation + rotationSpeed;
+                yield return new WaitForFixedUpdate();
+            }
 
+            facingDirection = target;
+        }
         //If moveAfter is true, move in the newly-faced direction
         if (moveAfter)
         {
@@ -268,7 +273,7 @@ public class Minotaur : MonoBehaviour {
         }
         while (Body.position.x < targetXPos)
         {
-            Body.Translate(new Vector3(moveSpeed, 0, 0));
+            Body.position = new Vector3(Body.position.x + moveSpeed, Body.position.y, Body.position.z);
             if (movementState == MinotaurMovementState.CHARGING)
             {
                 moveSpeed += chargingAcceleration;
@@ -276,6 +281,7 @@ public class Minotaur : MonoBehaviour {
             }
             yield return new WaitForFixedUpdate();
         }
+        currentRow += 1;
         findNextAction();
     }
     IEnumerator MoveDown()
@@ -294,7 +300,7 @@ public class Minotaur : MonoBehaviour {
         }
         while (Body.position.x > targetXPos)
         {
-            Body.Translate(new Vector3(-moveSpeed, 0, 0));
+            Body.position = new Vector3(Body.position.x - moveSpeed, Body.position.y, Body.position.z);
             if (movementState == MinotaurMovementState.CHARGING)
             {
                 moveSpeed += chargingAcceleration;
@@ -302,6 +308,7 @@ public class Minotaur : MonoBehaviour {
             }
             yield return new WaitForFixedUpdate();
         }
+        currentRow -= 1;
         findNextAction();
 
     }
@@ -321,7 +328,7 @@ public class Minotaur : MonoBehaviour {
         }
         while (Body.position.z < targetZPos)
         {
-            Body.Translate(new Vector3(0, moveSpeed, 0));
+            Body.position = new Vector3(Body.position.x, Body.position.y, Body.position.z + moveSpeed);
             if (movementState == MinotaurMovementState.CHARGING)
             {
                 moveSpeed += chargingAcceleration;
@@ -329,6 +336,7 @@ public class Minotaur : MonoBehaviour {
             }
             yield return new WaitForFixedUpdate();
         }
+        currentColumn -= 1;
         findNextAction();
 
     }
@@ -348,7 +356,7 @@ public class Minotaur : MonoBehaviour {
         }
         while (Body.position.z > targetZPos)
         {
-            Body.Translate(new Vector3(0, -moveSpeed, 0));
+            Body.position = new Vector3(Body.position.x, Body.position.y, Body.position.z - moveSpeed);
             if (movementState == MinotaurMovementState.CHARGING)
             {
                 moveSpeed += chargingAcceleration;
@@ -356,6 +364,7 @@ public class Minotaur : MonoBehaviour {
             }
             yield return new WaitForFixedUpdate();
         }
+        currentColumn += 1;
         findNextAction();
 
     }
