@@ -2,6 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+//PathNode is used for implementing the A* pathfinding algorithm
+//Sometime in the future, it may be beneficial to combine this class with the MazeNode class,
+//as there's no definite reason they need to be separate.
+public class PathNode
+{
+    public int row;
+    public int column;
+    public int gCost;
+    public int hCost;
+    public int fCost;
+    public bool isDiscovered = false;
+    public bool isClosed = false;
+    public MazeConnectionDirection directionToApproachFrom; //In pathfinding, determines which previous node the current should be reached from
+}
+
 public class Minotaur : MonoBehaviour {
 
     //caching
@@ -28,6 +43,12 @@ public class Minotaur : MonoBehaviour {
     public int minStartingRow = 0, maxStartingRow = 19;
     public int minStartingColumn = 0, maxStartingColumn = 19;
 
+    //Pathfinding
+    List<PathNode> nullNodesSet;
+    List<PathNode> openNodesSet;
+    List<PathNode> closedNodesSet;
+    List <List<PathNode> > allNodesSet;
+
     //State values
     private int currentRow, currentColumn;
     private MinotaurFacingRotation facingDirection;
@@ -49,7 +70,8 @@ public class Minotaur : MonoBehaviour {
 
     private List<float> directionToYRotation; //lookup table
     public Vector3 firstRowColumnPosition;
-    private Vector3 targetPosition;
+    private int targetRow, targetColumn;
+
     // Use this for initialization
     void Start() {
         Body = transform;
@@ -81,6 +103,29 @@ public class Minotaur : MonoBehaviour {
         movementState = MinotaurMovementState.ROAMING;
         currentNoiseLevel = roamingNoiseLevel;
         relocationDue = false;
+
+        //Setup pathfinding nodes
+        nullNodesSet = new List<PathNode>();
+        openNodesSet = new List<PathNode>();
+        closedNodesSet = new List<PathNode>();
+        allNodesSet = new List<List<PathNode>>();
+        for (int i = 0; i < columnCount; i++)
+        {
+            List<PathNode> pathNodeColumn = new List<PathNode>();
+            for (int j = 0; j < rowCount; j++)
+            {
+                PathNode newNode = new PathNode();
+                newNode.row = j;
+                newNode.column = i;
+                newNode.gCost = rowCount * columnCount;
+                newNode.fCost = newNode.gCost;
+                pathNodeColumn.Add(newNode);
+            }
+            allNodesSet.Add(pathNodeColumn);
+        }
+
+        targetPath = new List<MinotaurFacingRotation>();
+        StartCoroutine(listeningTimer());
         StartCoroutine(doNothing(1f));
     }
     IEnumerator doNothing(float seconds)
@@ -99,12 +144,259 @@ public class Minotaur : MonoBehaviour {
     //(Another function will have to be called first 
     void locateSound()
     {
+        Vector3 distanceToPlayer = new Vector3(Mathf.Abs(currentRow - playerState.currentMazeRow) * mazeTileDepth, 0, Mathf.Abs(currentColumn - playerState.currentMazeColumn) * mazeTileWidth);
+        float distanceMagnitude = distanceToPlayer.magnitude;
+        float noiseLevelDifference = playerState.currentNoiseLevel - currentNoiseLevel;
+        if(distanceMagnitude < noiseLevelDifference * 3f)
+        {
+            //Sound is loud/close enough to hear!
+            //For now, just target the player's location
+            targetRow = playerState.currentMazeRow;
+            targetColumn = playerState.currentMazeColumn;
+            if (distanceMagnitude + 10f < noiseLevelDifference * 3f)
+            {
+                //Sound is very, very noticeable to minotaur! He'll chase!
+                movementState = MinotaurMovementState.CHASING;
+            }
+            else
+            {
+                movementState = MinotaurMovementState.INVESTIGATING;
+            }
+            findPathToTarget(targetRow, targetColumn);
+        }
+        else
+        {
+            movementState = MinotaurMovementState.ROAMING;
+        }
+    }
 
+    void addNodeToOpenSet(PathNode node, PathNode endNode)
+    {
+        //Check G-cost by searching adjacent nodes
+        node.gCost = rowCount * columnCount; //assume worst case: that all tiles must be visited to reach from start node
+        PathNode lastNode;
+        if (node.row < rowCount - 1)
+        {
+            lastNode = allNodesSet[node.column][node.row + 1];
+            if (lastNode.isClosed && lastNode.gCost < node.gCost)
+            {
+                node.gCost = lastNode.gCost + 1;
+                node.directionToApproachFrom = MazeConnectionDirection.TOP;
+            }
+        }
+        if (node.row > 0)
+        {
+            lastNode = allNodesSet[node.column][node.row - 1];
+            if (lastNode.isClosed && lastNode.gCost < node.gCost)
+            {
+                node.gCost = lastNode.gCost + 1;
+                node.directionToApproachFrom = MazeConnectionDirection.BOTTOM;
+            }
+        }
+        if (node.column < columnCount - 1)
+        {
+            lastNode = allNodesSet[node.column + 1][node.row];
+            if (lastNode.isClosed && lastNode.gCost < node.gCost)
+            {
+                node.gCost = lastNode.gCost + 1;
+                node.directionToApproachFrom = MazeConnectionDirection.RIGHT;
+            }
+        }
+        if (node.column > 0)
+        {
+            lastNode = allNodesSet[node.column - 1][node.row];
+            if (lastNode.isClosed && lastNode.gCost < node.gCost)
+            {
+                node.gCost = lastNode.gCost + 1;
+                node.directionToApproachFrom = MazeConnectionDirection.LEFT;
+            }
+        }
+
+        //Now obtain hCost (easy)
+        node.hCost = Mathf.Abs(endNode.row - node.row) + Mathf.Abs(endNode.column - node.column);
+
+        //Use to get fcost (unweighted for now)
+        node.fCost = node.gCost + node.hCost;
+        node.isDiscovered = true;
+
+        //Add new node to open node set, then swap until it is in the correct place
+        //(list should stay sorted by descending f-cost)
+        openNodesSet.Add(node);
+        int i = openNodesSet.Count - 1;
+        while(i > 1 && openNodesSet[i - 1].fCost < node.fCost)
+        {
+            PathNode tmp = openNodesSet[i];
+            openNodesSet[i] = openNodesSet[i - 1];
+            openNodesSet[i - 1] = tmp;
+            i--;
+        }
+    }
+
+    void addNodeToClosedSet(PathNode node, PathNode lastNode, PathNode endNode)
+    {
+        if (!node.isClosed)
+        {
+            //Remove current node from open set and add to closed set
+            openNodesSet.RemoveAt(openNodesSet.Count - 1);
+            closedNodesSet.Add(node);
+            node.isClosed = true;
+        }
+        node.isDiscovered = true;
+        if (lastNode.row < node.row) node.directionToApproachFrom = MazeConnectionDirection.BOTTOM;
+        else if (lastNode.row > node.row) node.directionToApproachFrom = MazeConnectionDirection.TOP;
+        else if (lastNode.column < node.column) node.directionToApproachFrom = MazeConnectionDirection.LEFT;
+        else node.directionToApproachFrom = MazeConnectionDirection.RIGHT;
+
+        PathNode adjacentNode;
+        for(int dirIndex = 0; dirIndex < 4; dirIndex++)
+        {
+            MazeConnectionDirection dirEnum = (MazeConnectionDirection)dirIndex;
+            if (dirEnum == MazeConnectionDirection.RIGHT && node.column < columnCount - 1)
+            {
+                adjacentNode = allNodesSet[node.column + 1][node.row];
+            }
+            else if (dirEnum == MazeConnectionDirection.LEFT && node.column > 0)
+            {
+                adjacentNode = allNodesSet[node.column - 1][node.row];
+            }
+            else if (dirEnum == MazeConnectionDirection.TOP && node.row < rowCount - 1)
+            {
+                adjacentNode = allNodesSet[node.column][node.row + 1];
+            }
+            else if (dirEnum == MazeConnectionDirection.BOTTOM && node.row > 0)
+            {
+                adjacentNode = allNodesSet[node.column][node.row - 1];
+            }
+            else continue; //Means there is no adjacent tile in the direction being checked
+
+            if (adjacentNode.isDiscovered && adjacentNode.gCost > node.gCost + 1)
+            {
+                //Need to update adjacent node's gcost and fcost
+                adjacentNode.gCost = node.gCost + 1;
+                adjacentNode.fCost = adjacentNode.gCost + adjacentNode.hCost;
+                //Update the direction of approach for the adjacent node
+                switch(dirEnum)
+                {
+                    case MazeConnectionDirection.BOTTOM: adjacentNode.directionToApproachFrom = MazeConnectionDirection.TOP; break;
+                    case MazeConnectionDirection.TOP: adjacentNode.directionToApproachFrom = MazeConnectionDirection.BOTTOM; break;
+                    case MazeConnectionDirection.LEFT: adjacentNode.directionToApproachFrom = MazeConnectionDirection.RIGHT; break;
+                    case MazeConnectionDirection.RIGHT: adjacentNode.directionToApproachFrom = MazeConnectionDirection.LEFT; break;
+                }
+                if (!adjacentNode.isClosed)
+                {
+                    //Adjacent node is in open set. May need to find the node in the set, then update and re-sort set
+                    if (adjacentNode.fCost < node.fCost)
+                    {
+                        for (int i = openNodesSet.Count - 1; i > 0; i--)
+                        {
+                            if (openNodesSet[i].row == adjacentNode.row && openNodesSet[i].column == adjacentNode.column)
+                            {
+                                //Found node
+                                openNodesSet[i] = adjacentNode;
+                                int j = i;
+                                while (j < openNodesSet.Count - 1 && openNodesSet[j + 1].fCost > node.fCost)
+                                {
+                                    PathNode tmp = openNodesSet[j];
+                                    openNodesSet[j] = openNodesSet[j + 1];
+                                    openNodesSet[j + 1] = tmp;
+                                    j++;
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    //In closed set. Recursive addition to closed set needed.
+                    addNodeToClosedSet(adjacentNode, node, endNode);
+                }
+            }
+            else if(!adjacentNode.isDiscovered)
+            {
+                addNodeToOpenSet(adjacentNode, endNode);
+            }
+        }
     }
 
     void findPathToTarget(int targetRow, int targetColumn)
     {
+        //pathfinding algorithm here... let's go for A*.
 
+        //Get first and last node
+        PathNode startNode = allNodesSet[currentColumn][currentRow];
+        PathNode endNode = allNodesSet[targetColumn][targetRow];
+
+        //Set gcost of start nodes
+        startNode.gCost = 0;
+        startNode.hCost = Mathf.Abs(endNode.column - startNode.column) + Mathf.Abs(endNode.row - startNode.row);
+        startNode.fCost = startNode.gCost + startNode.hCost;
+        startNode.isDiscovered = true;
+        startNode.isClosed = true;
+        closedNodesSet.Add(startNode);
+        endNode.gCost = rowCount * columnCount;
+
+        PathNode adjacentNode;
+        //Add start-adjacent nodes to open set
+        if(startNode.column < columnCount - 1)
+        {
+            addNodeToOpenSet(allNodesSet[currentColumn + 1][currentRow], endNode);
+        }
+        if (startNode.column > 0)
+        {
+            addNodeToOpenSet(allNodesSet[currentColumn - 1][currentRow], endNode);
+        }
+        if (startNode.row < rowCount - 1)
+        {
+            addNodeToOpenSet(allNodesSet[currentColumn][currentRow + 1], endNode);
+        }
+        if (startNode.row > 0)
+        {
+            addNodeToOpenSet(allNodesSet[currentColumn][currentRow - 1], endNode);
+        }
+
+        while (!endNode.isClosed)
+        {
+            //Get open node with smallest fCost
+            PathNode nextNode = openNodesSet[openNodesSet.Count - 1];
+            PathNode lastNode;
+            if (nextNode.directionToApproachFrom == MazeConnectionDirection.TOP)
+                lastNode = allNodesSet[nextNode.column][nextNode.row + 1];
+            else if (nextNode.directionToApproachFrom == MazeConnectionDirection.BOTTOM)
+                lastNode = allNodesSet[nextNode.column][nextNode.row - 1];
+            else if (nextNode.directionToApproachFrom == MazeConnectionDirection.LEFT)
+                lastNode = allNodesSet[nextNode.column - 1][nextNode.row];
+            else
+                lastNode = allNodesSet[nextNode.column + 1][nextNode.row];
+
+            addNodeToClosedSet(nextNode, lastNode, endNode);
+        }
+
+        //Finally, take everything you have here and construct a path from the minotaur's position to the end position
+        targetPath.Clear();
+        PathNode currentNodeOnPath = endNode;
+        while (currentNodeOnPath.row != startNode.row || currentNodeOnPath.column != startNode.column)
+        {
+            switch (currentNodeOnPath.directionToApproachFrom)
+            {
+                case MazeConnectionDirection.TOP:
+                    targetPath.Add(MinotaurFacingRotation.DOWN); //When *approaching* from the top, minotaur is *facing* downward
+                    currentNodeOnPath = allNodesSet[currentNodeOnPath.column][currentNodeOnPath.row + 1];
+                    break;
+                case MazeConnectionDirection.BOTTOM:
+                    targetPath.Add(MinotaurFacingRotation.UP); //etc
+                    currentNodeOnPath = allNodesSet[currentNodeOnPath.column][currentNodeOnPath.row - 1];
+                    break;
+                case MazeConnectionDirection.LEFT:
+                    targetPath.Add(MinotaurFacingRotation.RIGHT); //etc
+                    currentNodeOnPath = allNodesSet[currentNodeOnPath.column - 1][currentNodeOnPath.row];
+                    break;
+                case MazeConnectionDirection.RIGHT:
+                    targetPath.Add(MinotaurFacingRotation.LEFT); //etc
+                    currentNodeOnPath = allNodesSet[currentNodeOnPath.column + 1][currentNodeOnPath.row];
+                    break;
+            }
+        } //Continue until start node is reached, and the path is complete!
+        Debug.Log(targetPath);
     }
 
     //Coroutine that signals time to re-listen for sounds (eg of the player every x seconds
@@ -123,7 +415,7 @@ public class Minotaur : MonoBehaviour {
     void findNextAction()
     {
         //Check: are we due for a player relocation?
-
+        if (relocationDue) locateSound();
         switch(movementState)
         {
             case MinotaurMovementState.ROAMING:
@@ -193,6 +485,12 @@ public class Minotaur : MonoBehaviour {
                 } while (startingDirection != targetDirection);
                 //Minotaur is trapped on 1 tile (wow! How'd you pull that off, player?!)
                 StartCoroutine(doNothing(1f));
+                break;
+            case MinotaurMovementState.INVESTIGATING:
+            case MinotaurMovementState.CHASING:
+                targetDirection = targetPath[targetPath.Count - 1];
+                targetPath.RemoveAt(targetPath.Count - 1);
+                StartCoroutine(changeDirection(targetDirection, true));
                 break;
             default:
                 //standing or unknown state
