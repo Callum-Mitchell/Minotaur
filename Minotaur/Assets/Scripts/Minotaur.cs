@@ -62,6 +62,25 @@ public class Minotaur : MonoBehaviour {
     private float chargeSpeedOffset = 0f;
     private bool relocationDue = false;
 
+    //Audio assets. Sound durations are in number of FixedUpdate calls
+    public List<AudioClip> footstepSounds;
+    public List<int> footstepSoundDurations;
+    public List<AudioClip> gallopSounds;
+    public List<int> gallopSoundDurations;
+    private int timeToNextFootstep;
+    public AudioSource footstepAudioSource;
+    public List<AudioClip> roamingGruntSounds;
+    public List<int> roamingGruntDurations;
+    public List<AudioClip> agitatedGruntSounds;
+    public List<int> agitatedGrungSoundDurations;
+    public List<AudioClip> realizationSounds;
+    public List<int> realizationSoundDurations;
+    public List<AudioClip> roarSounds;
+    public List<int> roarSoundDurations;
+    private int timeToNextVerbalSound; //Covers grunts, realizations and roars
+    public AudioSource verbalAudioSource;
+
+
     //Noise level units are in decibels. Higher = louder noises made by minotaur.
     //The minotaur can only hear noises with a coded noise level above its own
     //Each difference of 1 means can be heard from a distance of 3 in-game units
@@ -136,18 +155,72 @@ public class Minotaur : MonoBehaviour {
         }
 
         targetPath = new List<MinotaurFacingRotation>();
+
+        timeToNextFootstep = 0;
+        timeToNextVerbalSound = 0;
         StartCoroutine(listeningTimer());
         StartCoroutine(doNothing(1f));
     }
+
     IEnumerator doNothing(float seconds)
     {
         yield return new WaitForSeconds(seconds);
         findNextAction();
     }
 
-    // Update is called once per frame
-    void FixedUpdate() {
+    //Sound effects handled here
+    private void FixedUpdate()
+    {
+        int sfxID;
+        //If due, play random footstep sound
+        if(timeToNextFootstep <= 0)
+        {
+            switch(movementState)
+            {
+                case MinotaurMovementState.ROAMING:
+                case MinotaurMovementState.INVESTIGATING:
+                    sfxID = Random.Range(0, footstepSounds.Count - 1);
+                    footstepAudioSource.clip = footstepSounds[sfxID];
+                    footstepAudioSource.Play();
+                    timeToNextFootstep = footstepSoundDurations[sfxID];
+                    break;
+                case MinotaurMovementState.CHASING:
+                    sfxID = Random.Range(0, gallopSounds.Count - 1);
+                    footstepAudioSource.clip = gallopSounds[sfxID];
+                    footstepAudioSource.Play();
+                    timeToNextFootstep = gallopSoundDurations[sfxID];
+                    break;
+                default:
+                    break;
+            }
+        }
 
+        //If due, play random vocal sound
+        if (timeToNextVerbalSound <= 0)
+        {
+            switch(movementState)
+            {
+                case MinotaurMovementState.ROAMING:
+                    sfxID = Random.Range(0, roamingGruntSounds.Count - 1);
+                    verbalAudioSource.clip = roamingGruntSounds[sfxID];
+                    verbalAudioSource.Play();
+                    timeToNextVerbalSound = roamingGruntDurations[sfxID];
+                    break;
+                case MinotaurMovementState.INVESTIGATING:
+                    sfxID = Random.Range(0, agitatedGruntSounds.Count - 1);
+                    verbalAudioSource.clip = agitatedGruntSounds[sfxID];
+                    verbalAudioSource.Play();
+                    timeToNextVerbalSound = agitatedGrungSoundDurations[sfxID];
+                    break;
+                case MinotaurMovementState.CHASING:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        timeToNextFootstep--;
+        timeToNextVerbalSound--;
     }
 
     //(TODO) function for determining location of a source sound
@@ -167,17 +240,39 @@ public class Minotaur : MonoBehaviour {
             if (distanceMagnitude + 10f < noiseLevelDifference * 3f)
             {
                 //Sound is very, very noticeable to minotaur! He'll chase!
-                movementState = MinotaurMovementState.CHASING;
+                if (movementState != MinotaurMovementState.CHASING)
+                {
+                    movementState = MinotaurMovementState.CHASING;
+                    int sfxID = Random.Range(0, roarSounds.Count - 1);
+                    verbalAudioSource.clip = roarSounds[sfxID];
+                    verbalAudioSource.Play((ulong)(timeToNextVerbalSound * Time.deltaTime));
+                    timeToNextVerbalSound = roarSoundDurations[sfxID] + timeToNextVerbalSound;
+                }
+                findPathToTarget(targetRow, targetColumn);
+
             }
             else
             {
-                movementState = MinotaurMovementState.INVESTIGATING;
+                if (movementState == MinotaurMovementState.ROAMING)
+                {
+                    verbalAudioSource.clip = realizationSounds[0];
+                    verbalAudioSource.Play();
+                    timeToNextVerbalSound = 50;
+                }
+                if (movementState == MinotaurMovementState.ROAMING || targetPath.Count == 0)
+                {
+                    movementState = MinotaurMovementState.INVESTIGATING;
+                    findPathToTarget(targetRow, targetColumn);
+
+                }
             }
-            findPathToTarget(targetRow, targetColumn);
         }
         else
         {
-            movementState = MinotaurMovementState.ROAMING;
+            if (targetPath.Count == 0)
+            {
+                movementState = MinotaurMovementState.ROAMING;
+            }
         }
         relocationDue = false;
     }
@@ -402,7 +497,7 @@ public class Minotaur : MonoBehaviour {
         //Finally, take everything you have here and construct a path from the minotaur's position to the end position
         targetPath.Clear();
         PathNode currentNodeOnPath = endNode;
-        while (currentNodeOnPath.row != startNode.row || currentNodeOnPath.column != startNode.column)
+        while ((currentNodeOnPath.row != startNode.row || currentNodeOnPath.column != startNode.column) && targetPath.Count < 50)
         {
             switch (currentNodeOnPath.directionToApproachFrom)
             {
