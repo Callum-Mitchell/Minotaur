@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameStateManager : MonoBehaviour {
 
@@ -11,6 +12,14 @@ public class GameStateManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
-	}
+        if (Input.GetKey(KeyCode.R))
+        {
+            SceneManager.LoadScene(0);
+        }
+    }
+
+    void onLossCondition (int treasureCollected)
+    {
+
+    }
 }

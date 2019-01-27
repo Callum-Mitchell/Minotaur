@@ -97,6 +97,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
             }
 
             m_PreviouslyGrounded = m_CharacterController.isGrounded;
+
         }
 
         private void OnTriggerEnter(Collider other)
@@ -104,6 +105,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
             if(other.gameObject.tag == "Minotaur")
             {
                 //trigger loss condition
+                other.gameObject.SetActive(false);
                 StartCoroutine(deathEvent(treasureFound));
 
             }
@@ -117,7 +119,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
         IEnumerator victoryEvent(int treasureFound)
         {
-            TreasureWonText.GetComponent<UnityEngine.UI.Text>().text = "Treasure Won: " + treasureFound;
+            TreasureWonText.GetComponent<UnityEngine.UI.Text>().text = "\"R\" TO REPLAY";
             TreasureWonText.SetActive(true);
             VictoryText.SetActive(true);
             this.enabled = false;
@@ -129,12 +131,13 @@ namespace UnityStandardAssets.Characters.FirstPerson
             BlackScreen.SetActive(true);
             GetComponent<AudioSource>().clip = m_deathSound;
             GetComponent<AudioSource>().Play();
-            yield return new WaitForSeconds(1f);
-            TreasureLostText.GetComponent<UnityEngine.UI.Text>().text = "Treasure found: " + treasureFound;
-            TreasureLostText.SetActive(true);
-            LossText.SetActive(true);
+            yield return new WaitForSeconds(0.7f);
             GetComponent<AudioSource>().clip = m_deathSound2;
             GetComponent<AudioSource>().Play();
+            yield return new WaitForSeconds(0.3f);
+            TreasureLostText.GetComponent<UnityEngine.UI.Text>().text = "\"R\" TO RETRY";
+            TreasureLostText.SetActive(true);
+            LossText.SetActive(true);
 
             this.enabled = false;
         }

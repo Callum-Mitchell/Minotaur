@@ -97,11 +97,12 @@ public class Minotaur : MonoBehaviour {
 
     // Use this for initialization
     void Start() {
-        Body = transform;
+
     }
     //Called separately from start
     public void setup()
     {
+        Body = transform;
         playerState = playerStateManagerObject.GetComponent<PlayerStateManager>();
         mazeLayout = mazeLayoutObject.GetComponent<MazeLayout>();
         //Generate a random starting tile within a possible tile range
