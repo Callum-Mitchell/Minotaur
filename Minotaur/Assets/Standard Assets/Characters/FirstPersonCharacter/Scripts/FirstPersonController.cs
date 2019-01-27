@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityStandardAssets.CrossPlatformInput;
 using UnityStandardAssets.Utility;
@@ -29,6 +31,14 @@ namespace UnityStandardAssets.Characters.FirstPerson
         [SerializeField] private AudioClip[] m_FootstepSounds;    // an array of footstep sounds that will be randomly selected from.
         [SerializeField] private AudioClip m_JumpSound;           // the sound played when character leaves the ground.
         [SerializeField] private AudioClip m_LandSound;           // the sound played when character touches back on ground.
+        [SerializeField] private AudioClip m_deathSound;           // the sound played when character is hit by minotaur
+        [SerializeField] private AudioClip m_deathSound2;           // played after first m_deathSound
+        [SerializeField] private GameObject VictoryText;
+        [SerializeField] private GameObject TreasureWonText;
+        [SerializeField] private GameObject LossText;
+        [SerializeField] private GameObject TreasureLostText;
+        [SerializeField] private GameObject BlackScreen;
+
 
         private Camera m_Camera;
         private bool m_Jump;
@@ -44,6 +54,8 @@ namespace UnityStandardAssets.Characters.FirstPerson
         private bool m_Jumping;
         private AudioSource m_AudioSource;
 
+        private int treasureFound;
+
         // Use this for initialization
         private void Start()
         {
@@ -57,6 +69,8 @@ namespace UnityStandardAssets.Characters.FirstPerson
             m_Jumping = false;
             m_AudioSource = GetComponent<AudioSource>();
 			m_MouseLook.Init(transform , m_Camera.transform);
+
+            treasureFound = 0;
         }
 
 
@@ -85,6 +99,45 @@ namespace UnityStandardAssets.Characters.FirstPerson
             m_PreviouslyGrounded = m_CharacterController.isGrounded;
         }
 
+        private void OnTriggerEnter(Collider other)
+        {
+            if(other.gameObject.tag == "Minotaur")
+            {
+                //trigger loss condition
+                StartCoroutine(deathEvent(treasureFound));
+
+            }
+            else if(other.gameObject.tag == "VictoryRegion")
+            {
+                //Trigger win condition
+                StartCoroutine(victoryEvent(treasureFound));
+
+            }
+        }
+
+        IEnumerator victoryEvent(int treasureFound)
+        {
+            TreasureWonText.GetComponent<UnityEngine.UI.Text>().text = "Treasure Won: " + treasureFound;
+            TreasureWonText.SetActive(true);
+            VictoryText.SetActive(true);
+            this.enabled = false;
+            yield return new WaitForFixedUpdate();
+        }
+
+        IEnumerator deathEvent(int treasureFound)
+        {
+            BlackScreen.SetActive(true);
+            GetComponent<AudioSource>().clip = m_deathSound;
+            GetComponent<AudioSource>().Play();
+            yield return new WaitForSeconds(1f);
+            TreasureLostText.GetComponent<UnityEngine.UI.Text>().text = "Treasure found: " + treasureFound;
+            TreasureLostText.SetActive(true);
+            LossText.SetActive(true);
+            GetComponent<AudioSource>().clip = m_deathSound2;
+            GetComponent<AudioSource>().Play();
+
+            this.enabled = false;
+        }
 
         private void PlayLandingSound()
         {

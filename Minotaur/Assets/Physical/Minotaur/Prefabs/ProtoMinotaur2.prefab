@@ -42,7 +42,7 @@ GameObject:
   - component: {fileID: 114429262970563972}
   m_Layer: 0
   m_Name: ProtoMinotaur2
-  m_TagString: Untagged
+  m_TagString: Minotaur
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -116,7 +116,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1441794143895372}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -57.5, y: 2, z: 57.5}
+  m_LocalPosition: {x: 0, y: 2, z: 0}
   m_LocalScale: {x: 5, y: 4, z: 4}
   m_Children:
   - {fileID: 4981411208989944}
@@ -226,9 +226,9 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 1
-  MaxDistance: 50
+  MaxDistance: 70
   Pan2D: 0
-  rolloffMode: 0
+  rolloffMode: 1
   BypassEffects: 0
   BypassListenerEffects: 0
   BypassReverbZones: 0
@@ -306,9 +306,9 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 1
-  MaxDistance: 50
+  MaxDistance: 70
   Pan2D: 0
-  rolloffMode: 0
+  rolloffMode: 1
   BypassEffects: 0
   BypassListenerEffects: 0
   BypassReverbZones: 0
@@ -379,7 +379,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerStateManagerObject: {fileID: 0}
   mazeLayoutObject: {fileID: 0}
-  secondsPerRelocation: 5
+  secondsPerRelocation: 2
   roamingMoveSpeed: 0.1
   roamingRotationSpeed: 2
   investigatingMoveSpeed: 0.2
@@ -437,11 +437,11 @@ SphereCollider:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1441794143895372}
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: -0.1, y: 0, z: 0}
 --- !u!198 &198157180116236100
 ParticleSystem:
   m_ObjectHideFlags: 1
@@ -502,7 +502,7 @@ ParticleSystem:
   moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
-  randomSeed: 379517567
+  randomSeed: -913863650
   InitialModule:
     serializedVersion: 3
     enabled: 1
