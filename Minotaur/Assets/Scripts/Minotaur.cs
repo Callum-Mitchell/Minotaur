@@ -14,6 +14,10 @@ public class PathNode
     public int fCost;
     public bool isDiscovered = false;
     public bool isClosed = false;
+    public bool isTopAccessible;
+    public bool isBottomAccessible;
+    public bool isLeftAccessible;
+    public bool isRightAccessible;
     public MazeConnectionDirection directionToApproachFrom; //In pathfinding, determines which previous node the current should be reached from
 }
 
@@ -119,6 +123,13 @@ public class Minotaur : MonoBehaviour {
                 newNode.column = i;
                 newNode.gCost = rowCount * columnCount;
                 newNode.fCost = newNode.gCost;
+
+                //Set obstacles
+                newNode.isTopAccessible = (mazeLayout.tiles[i][j].top != null);
+                newNode.isBottomAccessible = (mazeLayout.tiles[i][j].bottom != null);
+                newNode.isLeftAccessible = (mazeLayout.tiles[i][j].left != null);
+                newNode.isRightAccessible = (mazeLayout.tiles[i][j].right != null);
+
                 pathNodeColumn.Add(newNode);
             }
             allNodesSet.Add(pathNodeColumn);
@@ -168,6 +179,7 @@ public class Minotaur : MonoBehaviour {
         {
             movementState = MinotaurMovementState.ROAMING;
         }
+        relocationDue = false;
     }
 
     void addNodeToOpenSet(PathNode node, PathNode endNode)
@@ -178,7 +190,7 @@ public class Minotaur : MonoBehaviour {
         if (node.row < rowCount - 1)
         {
             lastNode = allNodesSet[node.column][node.row + 1];
-            if (lastNode.isClosed && lastNode.gCost < node.gCost)
+            if (lastNode.isClosed && lastNode.isBottomAccessible && lastNode.gCost < node.gCost)
             {
                 node.gCost = lastNode.gCost + 1;
                 node.directionToApproachFrom = MazeConnectionDirection.TOP;
@@ -187,7 +199,7 @@ public class Minotaur : MonoBehaviour {
         if (node.row > 0)
         {
             lastNode = allNodesSet[node.column][node.row - 1];
-            if (lastNode.isClosed && lastNode.gCost < node.gCost)
+            if (lastNode.isClosed && lastNode.isTopAccessible && lastNode.gCost < node.gCost)
             {
                 node.gCost = lastNode.gCost + 1;
                 node.directionToApproachFrom = MazeConnectionDirection.BOTTOM;
@@ -196,7 +208,7 @@ public class Minotaur : MonoBehaviour {
         if (node.column < columnCount - 1)
         {
             lastNode = allNodesSet[node.column + 1][node.row];
-            if (lastNode.isClosed && lastNode.gCost < node.gCost)
+            if (lastNode.isClosed && lastNode.isLeftAccessible && lastNode.gCost < node.gCost)
             {
                 node.gCost = lastNode.gCost + 1;
                 node.directionToApproachFrom = MazeConnectionDirection.RIGHT;
@@ -205,7 +217,7 @@ public class Minotaur : MonoBehaviour {
         if (node.column > 0)
         {
             lastNode = allNodesSet[node.column - 1][node.row];
-            if (lastNode.isClosed && lastNode.gCost < node.gCost)
+            if (lastNode.isClosed && lastNode.isRightAccessible && lastNode.gCost < node.gCost)
             {
                 node.gCost = lastNode.gCost + 1;
                 node.directionToApproachFrom = MazeConnectionDirection.LEFT;
@@ -322,6 +334,22 @@ public class Minotaur : MonoBehaviour {
     {
         //pathfinding algorithm here... let's go for A*.
 
+        //First, clear previous path info
+        closedNodesSet.Clear();
+        openNodesSet.Clear();
+
+        //Next, reset the "all nodes" values (will have been affected by the last pathfind)
+        for (int i = 0; i < columnCount; i++)
+        {
+            for (int j = 0; j < rowCount; j++)
+            {                
+                allNodesSet[i][j].gCost = rowCount * columnCount;
+                allNodesSet[i][j].fCost = allNodesSet[i][j].gCost;
+                allNodesSet[i][j].isClosed = false;
+                allNodesSet[i][j].isDiscovered = false;
+            }
+        }
+
         //Get first and last node
         PathNode startNode = allNodesSet[currentColumn][currentRow];
         PathNode endNode = allNodesSet[targetColumn][targetRow];
@@ -379,24 +407,36 @@ public class Minotaur : MonoBehaviour {
             switch (currentNodeOnPath.directionToApproachFrom)
             {
                 case MazeConnectionDirection.TOP:
-                    targetPath.Add(MinotaurFacingRotation.DOWN); //When *approaching* from the top, minotaur is *facing* downward
-                    currentNodeOnPath = allNodesSet[currentNodeOnPath.column][currentNodeOnPath.row + 1];
+                    if (currentNodeOnPath.row < rowCount - 1)
+                    {
+                        targetPath.Add(MinotaurFacingRotation.DOWN); //When *approaching* from the top, minotaur is *facing* downward
+                        currentNodeOnPath = allNodesSet[currentNodeOnPath.column][currentNodeOnPath.row + 1];
+                    }
                     break;
                 case MazeConnectionDirection.BOTTOM:
-                    targetPath.Add(MinotaurFacingRotation.UP); //etc
-                    currentNodeOnPath = allNodesSet[currentNodeOnPath.column][currentNodeOnPath.row - 1];
+                    if (currentNodeOnPath.row > 0)
+                    {
+                        targetPath.Add(MinotaurFacingRotation.UP); //etc
+                        currentNodeOnPath = allNodesSet[currentNodeOnPath.column][currentNodeOnPath.row - 1];
+                    }
                     break;
                 case MazeConnectionDirection.LEFT:
-                    targetPath.Add(MinotaurFacingRotation.RIGHT); //etc
-                    currentNodeOnPath = allNodesSet[currentNodeOnPath.column - 1][currentNodeOnPath.row];
+                    if (currentNodeOnPath.column > 0)
+                    {
+
+                        targetPath.Add(MinotaurFacingRotation.RIGHT); //etc
+                        currentNodeOnPath = allNodesSet[currentNodeOnPath.column - 1][currentNodeOnPath.row];
+                    }
                     break;
                 case MazeConnectionDirection.RIGHT:
-                    targetPath.Add(MinotaurFacingRotation.LEFT); //etc
-                    currentNodeOnPath = allNodesSet[currentNodeOnPath.column + 1][currentNodeOnPath.row];
+                    if (currentNodeOnPath.column < columnCount - 1)
+                    {
+                        targetPath.Add(MinotaurFacingRotation.LEFT); //etc
+                        currentNodeOnPath = allNodesSet[currentNodeOnPath.column + 1][currentNodeOnPath.row];
+                    }
                     break;
             }
         } //Continue until start node is reached, and the path is complete!
-        Debug.Log(targetPath);
     }
 
     //Coroutine that signals time to re-listen for sounds (eg of the player every x seconds
@@ -415,7 +455,11 @@ public class Minotaur : MonoBehaviour {
     void findNextAction()
     {
         //Check: are we due for a player relocation?
-        if (relocationDue) locateSound();
+        if (relocationDue)
+        {
+            locateSound();
+            relocationDue = false;
+        }
         switch(movementState)
         {
             case MinotaurMovementState.ROAMING:
@@ -488,9 +532,17 @@ public class Minotaur : MonoBehaviour {
                 break;
             case MinotaurMovementState.INVESTIGATING:
             case MinotaurMovementState.CHASING:
-                targetDirection = targetPath[targetPath.Count - 1];
-                targetPath.RemoveAt(targetPath.Count - 1);
-                StartCoroutine(changeDirection(targetDirection, true));
+                if (targetPath.Count > 0)
+                {
+                    targetDirection = targetPath[targetPath.Count - 1];
+                    targetPath.RemoveAt(targetPath.Count - 1);
+                    StartCoroutine(changeDirection(targetDirection, true));
+                }
+                else
+                {
+                    relocationDue = true;
+                    StartCoroutine(doNothing(0.5f));
+                }
                 break;
             default:
                 //standing or unknown state
@@ -528,13 +580,26 @@ public class Minotaur : MonoBehaviour {
                 rotationSpeed = -rotationSpeed;
             }
             float lastRotation = Body.eulerAngles.y;
+            int intLastRotation = Mathf.RoundToInt(lastRotation) + (turnRight ? 1 : -1);
             float nextRotation = lastRotation + rotationSpeed;
-            float targetRotation = (float)target;
-            while ((lastRotation < targetRotation - 0.0001f && nextRotation <= targetRotation - 0.0001f)
-                || (lastRotation > targetRotation + 0.0001f && nextRotation >= targetRotation + 0.0001f))
+            int targetRotation = (int)target;
+            if (intLastRotation > targetRotation && turnRight)
+            {
+                intLastRotation -= 360;
+                lastRotation = (float)intLastRotation;
+            }
+            else if (intLastRotation < targetRotation && !turnRight)
+            {
+                intLastRotation += 360;
+                lastRotation = (float)intLastRotation;
+            }
+
+            while ((turnRight && (intLastRotation < targetRotation))
+                || (!turnRight && (intLastRotation > targetRotation)))
             {
                 Body.Rotate(new Vector3(0, rotationSpeed, 0));
-                lastRotation = Body.eulerAngles.y;
+                lastRotation += rotationSpeed;
+                intLastRotation = Mathf.RoundToInt(lastRotation);
                 nextRotation = lastRotation + rotationSpeed;
                 yield return new WaitForFixedUpdate();
             }
@@ -557,7 +622,7 @@ public class Minotaur : MonoBehaviour {
     //Movement routines covering roaming, investigating, chasing, charging, etc
     IEnumerator MoveUp()
     {
-        float targetXPos = Body.position.x + mazeTileDepth;
+        float targetXPos = ((currentRow + 1) * mazeTileDepth) + firstRowColumnPosition.x;
         float moveSpeed;
         switch (movementState)
         {
@@ -580,11 +645,12 @@ public class Minotaur : MonoBehaviour {
             yield return new WaitForFixedUpdate();
         }
         currentRow += 1;
+        Body.position = new Vector3(targetXPos, Body.position.y, Body.position.z);
         findNextAction();
     }
     IEnumerator MoveDown()
     {
-        float targetXPos = Body.position.x - mazeTileDepth;
+        float targetXPos = ((currentRow - 1) * mazeTileDepth) + firstRowColumnPosition.x;
         float moveSpeed;
         switch (movementState)
         {
@@ -607,12 +673,13 @@ public class Minotaur : MonoBehaviour {
             yield return new WaitForFixedUpdate();
         }
         currentRow -= 1;
+        Body.position = new Vector3(targetXPos, Body.position.y, Body.position.z);
         findNextAction();
 
     }
     IEnumerator MoveLeft()
     {
-        float targetZPos = Body.position.z + mazeTileWidth;
+        float targetZPos = -((currentColumn - 1) * mazeTileDepth) + firstRowColumnPosition.z;
         float moveSpeed;
         switch (movementState)
         {
@@ -635,12 +702,13 @@ public class Minotaur : MonoBehaviour {
             yield return new WaitForFixedUpdate();
         }
         currentColumn -= 1;
+        Body.position = new Vector3(Body.position.x, Body.position.y, targetZPos);
         findNextAction();
 
     }
     IEnumerator MoveRight()
     {
-        float targetZPos = Body.position.z - mazeTileWidth;
+        float targetZPos = -((currentColumn + 1) * mazeTileDepth) + firstRowColumnPosition.z;
         float moveSpeed;
         switch (movementState)
         {
@@ -663,6 +731,7 @@ public class Minotaur : MonoBehaviour {
             yield return new WaitForFixedUpdate();
         }
         currentColumn += 1;
+        Body.position = new Vector3(Body.position.x, Body.position.y, targetZPos);
         findNextAction();
 
     }

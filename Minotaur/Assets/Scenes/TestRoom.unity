@@ -8070,6 +8070,7 @@ MonoBehaviour:
   firstColumnPos: 57
   mazeTileDepth: 6
   mazeTileWidth: 6
+  currentNoiseLevel: 0
 --- !u!4 &1373946347
 Transform:
   m_ObjectHideFlags: 0
@@ -12114,6 +12115,11 @@ Prefab:
     - target: {fileID: 114429262970563972, guid: 3026881db22d8c9489d33d6eecfd3247,
         type: 2}
       propertyPath: firstRowColumnPosition.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 114429262970563972, guid: 3026881db22d8c9489d33d6eecfd3247,
+        type: 2}
+      propertyPath: secondsPerRelocation
       value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
