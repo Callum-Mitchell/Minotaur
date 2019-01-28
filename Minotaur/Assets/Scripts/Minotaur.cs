@@ -106,14 +106,14 @@ public class Minotaur : MonoBehaviour {
         playerState = playerStateManagerObject.GetComponent<PlayerStateManager>();
         mazeLayout = mazeLayoutObject.GetComponent<MazeLayout>();
         //Generate a random starting tile within a possible tile range
-        int startCol = Random.Range(minStartingColumn, maxStartingColumn);
-        int startRow = Random.Range(minStartingRow, maxStartingRow);
+        int startCol = Random.Range(minStartingColumn, maxStartingColumn + 1);
+        int startRow = Random.Range(minStartingRow, maxStartingRow + 1);
         //Use to set starting position
         transform.position = new Vector3(firstRowColumnPosition.x + (startRow * mazeTileDepth), firstRowColumnPosition.y, firstRowColumnPosition.z - (startCol * mazeTileWidth));
         currentColumn = startCol;
         currentRow = startRow;
         //Randomize starting rotation
-        int startFaceDirectionIndex = Random.Range(0, 3);
+        int startFaceDirectionIndex = Random.Range(0, 4);
         switch (startFaceDirectionIndex)
         {
             case 0: facingDirection = MinotaurFacingRotation.UP; break;
@@ -180,13 +180,13 @@ public class Minotaur : MonoBehaviour {
             {
                 case MinotaurMovementState.ROAMING:
                 case MinotaurMovementState.INVESTIGATING:
-                    sfxID = Random.Range(0, footstepSounds.Count - 1);
+                    sfxID = Random.Range(0, footstepSounds.Count);
                     footstepAudioSource.clip = footstepSounds[sfxID];
                     footstepAudioSource.Play();
                     timeToNextFootstep = footstepSoundDurations[sfxID];
                     break;
                 case MinotaurMovementState.CHASING:
-                    sfxID = Random.Range(0, gallopSounds.Count - 1);
+                    sfxID = Random.Range(0, gallopSounds.Count);
                     footstepAudioSource.clip = gallopSounds[sfxID];
                     footstepAudioSource.Play();
                     timeToNextFootstep = gallopSoundDurations[sfxID];
@@ -202,13 +202,13 @@ public class Minotaur : MonoBehaviour {
             switch(movementState)
             {
                 case MinotaurMovementState.ROAMING:
-                    sfxID = Random.Range(0, roamingGruntSounds.Count - 1);
+                    sfxID = Random.Range(0, roamingGruntSounds.Count);
                     verbalAudioSource.clip = roamingGruntSounds[sfxID];
                     verbalAudioSource.Play();
                     timeToNextVerbalSound = roamingGruntDurations[sfxID];
                     break;
                 case MinotaurMovementState.INVESTIGATING:
-                    sfxID = Random.Range(0, agitatedGruntSounds.Count - 1);
+                    sfxID = Random.Range(0, agitatedGruntSounds.Count);
                     verbalAudioSource.clip = agitatedGruntSounds[sfxID];
                     verbalAudioSource.Play();
                     timeToNextVerbalSound = agitatedGrungSoundDurations[sfxID];
@@ -244,7 +244,7 @@ public class Minotaur : MonoBehaviour {
                 if (movementState != MinotaurMovementState.CHASING)
                 {
                     movementState = MinotaurMovementState.CHASING;
-                    int sfxID = Random.Range(0, roarSounds.Count - 1);
+                    int sfxID = Random.Range(0, roarSounds.Count);
                     verbalAudioSource.clip = roarSounds[sfxID];
                     verbalAudioSource.Play((ulong)(timeToNextVerbalSound * Time.deltaTime));
                     timeToNextVerbalSound = roarSoundDurations[sfxID] + timeToNextVerbalSound;
@@ -330,8 +330,13 @@ public class Minotaur : MonoBehaviour {
         //Add new node to open node set, then swap until it is in the correct place
         //(list should stay sorted by descending f-cost)
         openNodesSet.Add(node);
+        if(node.fCost >= 400)
+        {
+            //Something is wrong!
+            node.fCost += 0;
+        }
         int i = openNodesSet.Count - 1;
-        while(i > 1 && openNodesSet[i - 1].fCost < node.fCost)
+        while(i >= 1 && openNodesSet[i - 1].fCost < node.fCost)
         {
             PathNode tmp = openNodesSet[i];
             openNodesSet[i] = openNodesSet[i - 1];
@@ -359,23 +364,23 @@ public class Minotaur : MonoBehaviour {
         for(int dirIndex = 0; dirIndex < 4; dirIndex++)
         {
             MazeConnectionDirection dirEnum = (MazeConnectionDirection)dirIndex;
-            if (dirEnum == MazeConnectionDirection.RIGHT && node.column < columnCount - 1)
+            if (dirEnum == MazeConnectionDirection.RIGHT && node.column < columnCount - 1 && node.isRightAccessible)
             {
                 adjacentNode = allNodesSet[node.column + 1][node.row];
             }
-            else if (dirEnum == MazeConnectionDirection.LEFT && node.column > 0)
+            else if (dirEnum == MazeConnectionDirection.LEFT && node.column > 0 && node.isLeftAccessible)
             {
                 adjacentNode = allNodesSet[node.column - 1][node.row];
             }
-            else if (dirEnum == MazeConnectionDirection.TOP && node.row < rowCount - 1)
+            else if (dirEnum == MazeConnectionDirection.TOP && node.row < rowCount - 1 && node.isTopAccessible)
             {
                 adjacentNode = allNodesSet[node.column][node.row + 1];
             }
-            else if (dirEnum == MazeConnectionDirection.BOTTOM && node.row > 0)
+            else if (dirEnum == MazeConnectionDirection.BOTTOM && node.row > 0 && node.isBottomAccessible)
             {
                 adjacentNode = allNodesSet[node.column][node.row - 1];
             }
-            else continue; //Means there is no adjacent tile in the direction being checked
+            else continue; //Means there is no adjacent tile in the direction being checked, or it is blocked by a wall
 
             if (adjacentNode.isDiscovered && adjacentNode.gCost > node.gCost + 1)
             {
@@ -421,14 +426,26 @@ public class Minotaur : MonoBehaviour {
             }
             else if(!adjacentNode.isDiscovered)
             {
+                //New accessible node found! Add to open set.
                 addNodeToOpenSet(adjacentNode, endNode);
             }
+        }
+        if(node.fCost == 400)
+        {
+            //Something went wrong!
+            node.fCost += 0;
         }
     }
 
     void findPathToTarget(int targetRow, int targetColumn)
     {
         //pathfinding algorithm here... let's go for A*.
+
+        //Before anything, make sure the player is actually inside the maze somewhere!
+        if(targetRow < 0 || targetRow > rowCount - 1 || targetColumn < 0 || targetColumn > columnCount - 1)
+        {
+            return;
+        }
 
         //First, clear previous path info
         closedNodesSet.Clear();
@@ -461,19 +478,19 @@ public class Minotaur : MonoBehaviour {
 
         PathNode adjacentNode;
         //Add start-adjacent nodes to open set
-        if(startNode.column < columnCount - 1)
+        if(startNode.column < columnCount - 1 && startNode.isRightAccessible)
         {
             addNodeToOpenSet(allNodesSet[currentColumn + 1][currentRow], endNode);
         }
-        if (startNode.column > 0)
+        if (startNode.column > 0 && startNode.isLeftAccessible)
         {
             addNodeToOpenSet(allNodesSet[currentColumn - 1][currentRow], endNode);
         }
-        if (startNode.row < rowCount - 1)
+        if (startNode.row < rowCount - 1 && startNode.isTopAccessible)
         {
             addNodeToOpenSet(allNodesSet[currentColumn][currentRow + 1], endNode);
         }
-        if (startNode.row > 0)
+        if (startNode.row > 0 && startNode.isBottomAccessible)
         {
             addNodeToOpenSet(allNodesSet[currentColumn][currentRow - 1], endNode);
         }

@@ -84,7 +84,7 @@ public class MazeLayout : MonoBehaviour {
             MazeTile tileToConnect = boundaryTiles[adjacentTileIndex];
             tileToConnect = tiles[tileToConnect.column][tileToConnect.row];
             //Now generate another random int between 0 and 3.
-            int connectionDirection = Random.Range(0, 3);
+            int connectionDirection = Random.Range(0, 4);
             //0 = top, 1 = right, 2 = bottom, 3 = left
             //Eg. If starting at top, check if the current node's "top" is entrance-connected. If not, connect the 2 nodes.
             //If already entrance-connected, generate random 0-1 number, and if it's less than a certain threshold, connect anyway.
@@ -213,7 +213,7 @@ public class MazeLayout : MonoBehaviour {
                         boundaryTiles.Remove(tileToConnect);
                     }
                 }
-                if (Random.Range(0, 1) > additionalConnectionThreshold) break;
+                if (Random.Range(0f, 1f) > additionalConnectionThreshold) break;
             } while (firstConnectionDirection != connectionDirection);
 
             //Repeat until adjacent connections list is empty (meaning all tiles are accessible!) or until

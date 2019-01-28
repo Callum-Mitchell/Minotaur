@@ -33,6 +33,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
         [SerializeField] private AudioClip m_LandSound;           // the sound played when character touches back on ground.
         [SerializeField] private AudioClip m_deathSound;           // the sound played when character is hit by minotaur
         [SerializeField] private AudioClip m_deathSound2;           // played after first m_deathSound
+        [SerializeField] private GameObject UICanvas;
         [SerializeField] private GameObject VictoryText;
         [SerializeField] private GameObject TreasureWonText;
         [SerializeField] private GameObject LossText;
@@ -54,7 +55,10 @@ namespace UnityStandardAssets.Characters.FirstPerson
         private bool m_Jumping;
         private AudioSource m_AudioSource;
 
+        [HideInInspector] public bool isAlive;
+        [HideInInspector] public bool isEscaped;
         private int treasureFound;
+        
 
         // Use this for initialization
         private void Start()
@@ -70,6 +74,8 @@ namespace UnityStandardAssets.Characters.FirstPerson
             m_AudioSource = GetComponent<AudioSource>();
 			m_MouseLook.Init(transform , m_Camera.transform);
 
+            isAlive = true;
+            isEscaped = false;
             treasureFound = 0;
         }
 
@@ -119,15 +125,17 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
         IEnumerator victoryEvent(int treasureFound)
         {
+            isEscaped = true;
             TreasureWonText.GetComponent<UnityEngine.UI.Text>().text = "\"R\" TO REPLAY";
             TreasureWonText.SetActive(true);
             VictoryText.SetActive(true);
-            this.enabled = false;
+            enabled = false;
             yield return new WaitForFixedUpdate();
         }
 
         IEnumerator deathEvent(int treasureFound)
         {
+            isAlive = false;
             BlackScreen.SetActive(true);
             GetComponent<AudioSource>().clip = m_deathSound;
             GetComponent<AudioSource>().Play();
@@ -139,7 +147,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
             TreasureLostText.SetActive(true);
             LossText.SetActive(true);
 
-            this.enabled = false;
+            enabled = false;
         }
 
         private void PlayLandingSound()
@@ -152,6 +160,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
 
         private void FixedUpdate()
         {
+            if (!isAlive) return;
             float speed;
             GetInput(out speed);
             // always move along the camera forward as it is the direction that it being aimed at
