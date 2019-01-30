@@ -84,11 +84,11 @@ public class Minotaur : MonoBehaviour {
     //Noise level units are in decibels. Higher = louder noises made by minotaur.
     //The minotaur can only hear noises with a coded noise level above its own
     //Each difference of 1 means can be heard from a distance of 3 in-game units
-    private float roamingNoiseLevel = 0f;
-    private float investigatingNoiseLevel = 3f;
+    private float roamingNoiseLevel = 2f;
+    private float investigatingNoiseLevel = 4f;
     private float chargingNoiseLevel = 25f;
-    private float chasingNoiseLevel = 7f;
-    private float standingNoiseLevel = -5f;
+    private float chasingNoiseLevel = 10f;
+    private float standingNoiseLevel = -3f;
     private float currentNoiseLevel;
 
     private List<float> directionToYRotation; //lookup table
@@ -183,7 +183,7 @@ public class Minotaur : MonoBehaviour {
                     sfxID = Random.Range(0, footstepSounds.Count);
                     footstepAudioSource.clip = footstepSounds[sfxID];
                     footstepAudioSource.Play();
-                    timeToNextFootstep = footstepSoundDurations[sfxID];
+                    timeToNextFootstep = Mathf.RoundToInt(footstepSoundDurations[sfxID] * (movementState == MinotaurMovementState.INVESTIGATING ? 0.8f : 1f));
                     break;
                 case MinotaurMovementState.CHASING:
                     sfxID = Random.Range(0, gallopSounds.Count);
@@ -238,7 +238,7 @@ public class Minotaur : MonoBehaviour {
             //For now, just target the player's location
             targetRow = playerState.currentMazeRow;
             targetColumn = playerState.currentMazeColumn;
-            if (distanceMagnitude + 10f < noiseLevelDifference * 3f)
+            if (distanceMagnitude + 17f < noiseLevelDifference * 3f)
             {
                 //Sound is very, very noticeable to minotaur! He'll chase!
                 if (movementState != MinotaurMovementState.CHASING)
@@ -645,7 +645,7 @@ public class Minotaur : MonoBehaviour {
                 break;
             case MinotaurMovementState.INVESTIGATING:
             case MinotaurMovementState.CHASING:
-                if (targetPath.Count > 0)
+                if (targetPath.Count > 0 && !relocationDue)
                 {
                     targetDirection = targetPath[targetPath.Count - 1];
                     targetPath.RemoveAt(targetPath.Count - 1);
@@ -654,7 +654,7 @@ public class Minotaur : MonoBehaviour {
                 else
                 {
                     relocationDue = true;
-                    StartCoroutine(doNothing(0.5f));
+                    StartCoroutine(doNothing(0.01f));
                 }
                 break;
             default:

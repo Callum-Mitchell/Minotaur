@@ -10,7 +10,7 @@ public class MusicPlayer : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         timeToNextClip = 20;
-        GetComponent<AudioSource>().volume = 0.2f;
+        GetComponent<AudioSource>().volume = 0.1f;
 	}
 	
 	// Update is called once per frame
