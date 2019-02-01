@@ -18,7 +18,7 @@ public class PlayerStateManager : MonoBehaviour {
     //Each increase by 1 means can be heard from a distance of 3 in-game units
     //Note that the minotaur is also making noise - the minotaur's noise level will be subtracted from this value and that of other sounds
     private float walkingNoiseLevel = 16f;
-    private float RunningNoiseLevel = 23f;
+    private float RunningNoiseLevel = 22f;
     private float crouchingNoiseLevel = 9f;
     private float standingNoiseLevel = 0f;
 

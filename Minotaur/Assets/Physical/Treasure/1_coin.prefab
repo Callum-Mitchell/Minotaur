@@ -38,6 +38,7 @@ GameObject:
   - component: {fileID: 33761689709053770}
   - component: {fileID: 23833919790102442}
   - component: {fileID: 95053090694411676}
+  - component: {fileID: 135475635899721266}
   m_Layer: 0
   m_Name: 1_coin
   m_TagString: Untagged
@@ -84,8 +85,8 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1442340551021080}
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -0, y: 1, z: 0.018534945}
-  m_LocalScale: {x: 3, y: 3, z: 2.5}
+  m_LocalPosition: {x: -0, y: 0.01, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 2.5}
   m_Children:
   - {fileID: 4269959395601652}
   - {fileID: 4859043384708102}
@@ -298,3 +299,15 @@ Light:
   m_UseColorTemperature: 0
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!135 &135475635899721266
+SphereCollider:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1442340551021080}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.009
+  m_Center: {x: -0.000035832636, y: -0.000038232665, z: -0.0002456449}
